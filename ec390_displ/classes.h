@@ -20,12 +20,14 @@ enum class Menu
 class Message
 {
 public:
-    Message(MessageLevel level, const char* message)
+    Message(MessageLevel level, char* message)
         : m_MessageLevel(level), m_Message(message), m_Accepted(false)
     {}
 
     ~Message()
-    {}
+    {
+        delete m_Message;
+    }
 
     void Print()
     {
@@ -34,7 +36,7 @@ public:
 
 private:
     MessageLevel m_MessageLevel;
-    const char* m_Message;
+    char* m_Message;
     bool m_Accepted;
 };
 

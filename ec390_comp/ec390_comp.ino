@@ -1,12 +1,8 @@
-#include "classes.h"
-#include <ArxContainer.h>
-
-arx::vector<Message*> g_Messages;
-Menu g_Menu;
+#include <Wire.h>
 
 void setup() 
 {
-  g_Menu = Menu::Main;
+  Wire.begin();
 
   Serial.begin(9600);
   SetupPins();
@@ -69,60 +65,9 @@ void SetupPins()
 
 void loop() 
 {
-  if(g_Messages.size() > 0)
-  {
-    for(int i = 0; i < g_Messages.size(); i++)
-    {
-      g_Messages[i]->Print();
-      
-      bool accepted = false;
-      do
-      {
-        //Check if enter pressed
-        if (true)
-        {
-          accepted = true;
-          delete g_Messages[i];
-        } 
-      } 
-      while(!accepted);
-    }
-
-    g_Messages.clear();
-  }
-
-  if (g_Menu == Menu::Main)
-  {
-    DrawMain();
-  }
-  else if (g_Menu == Menu::Engine)
-  {
-    DrawEngine();
-  }
-  else if (g_Menu == Menu::Hydraulics)
-  {
-    DrawHydraulics();
-  }
-  else if (g_Menu == Menu::Settings)
-  {
-    DrawSettings();
-  }
-
   CheckSwitches();
   CheckGuards();
 }
-
-void DrawMain()
-{}
-
-void DrawEngine()
-{}
-
-void DrawHydraulics()
-{}
-
-void DrawSettings()
-{}
 
 void CheckSwitches()
 {}
@@ -135,7 +80,10 @@ void CheckGuards()
   if(engineOilState == HIGH && !engineOilCreated)
   {
     engineOilCreated = true;
-    g_Messages.push_back(new Message(MessageLevel::Critical, "Låg motoroljenivå!"));
+    Wire.beginTransmission(4);
+    Wire.write("{3Låg motorolja!}");
+    Wire.endTransmission();
+    Serial.println("Sent!");
   }
 
   int hydraulicOilState = digitalRead(11);
@@ -144,6 +92,8 @@ void CheckGuards()
   if(hydraulicOilState == HIGH && !hydraulicOilCreated)
   {
     hydraulicOilCreated = true;
-    g_Messages.push_back(new Message(MessageLevel::Critical, "Låg hydrailoljenivå!"));
+    Wire.beginTransmission(4);
+    Wire.write("{3Låg hydraulolja!}");
+    Wire.endTransmission();
   }
 }
