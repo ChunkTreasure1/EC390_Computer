@@ -67,6 +67,8 @@ void loop()
 {
   CheckSwitches();
   CheckGuards();
+
+  delay(500);
 }
 
 void CheckSwitches()
@@ -80,7 +82,7 @@ void CheckGuards()
   if(engineOilState == HIGH && !engineOilCreated)
   {
     engineOilCreated = true;
-    Wire.beginTransmission(4);
+    Wire.beginTransmission(10);
     Wire.write("{3Låg motorolja!}");
     Wire.endTransmission();
     Serial.println("Sent!");
@@ -92,7 +94,7 @@ void CheckGuards()
   if(hydraulicOilState == HIGH && !hydraulicOilCreated)
   {
     hydraulicOilCreated = true;
-    Wire.beginTransmission(4);
+    Wire.beginTransmission(10);
     Wire.write("{3Låg hydraulolja!}");
     Wire.endTransmission();
   }

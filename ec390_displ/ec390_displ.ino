@@ -9,24 +9,26 @@ void setup()
 {
   g_Menu = Menu::Main;
 
-  Wire.begin(4);
-  Wire.onReceive(RecieveEvent);
+  Wire.begin(10);
+  Wire.onReceive(recieveEvent);
   Serial.begin(9600);
 }
 
-void RecieveEvent(int amount)
+void recieveEvent(int howMany)
 {
+  Serial.println("Recieved!");
+  
   char c = Wire.read();
   if(c == '{')
   {
     MessageLevel msgLevel = (MessageLevel)Wire.read();
 
-    char* string = new char[amount - 3];
+    char* string = new char[howMany - 3];
     int i = 0;
 
     while (1 < Wire.available())
     {
-      if (i < amount - 2)
+      if (i < howMany - 2)
       {
         string[i] = Wire.read();
       }
@@ -37,10 +39,9 @@ void RecieveEvent(int amount)
       i++;
     }
 
-    g_Messages.push_back(new Message(msgLevel, string));
+    g_Messages.push_back(new Message(msgLevel, string));  
+    Serial.println(string);
   }
-
-  Serial.println("Recieved!");
 }
 
 void loop() 
@@ -66,7 +67,7 @@ void loop()
 
     g_Messages.clear();
   }
-
+  
   if (g_Menu == Menu::Main)
   {
     DrawMain();
@@ -83,6 +84,8 @@ void loop()
   {
     DrawSettings();
   }
+
+  delay(100);
 }
 
 void DrawMain()
