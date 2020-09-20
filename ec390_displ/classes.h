@@ -40,4 +40,14 @@ private:
     bool m_Accepted;
 };
 
+struct vec2
+{
+  vec2(float x = 0, float y = 0)
+    : x(x), y(y)
+  {}
+
+  float x;
+  float y;
+};
+
 #endif //_CLASSES
