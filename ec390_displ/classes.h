@@ -29,10 +29,7 @@ public:
         delete m_Message;
     }
 
-    void Print()
-    {
-        Serial.println(m_Message);
-    }
+    void Print();
 
 private:
     MessageLevel m_MessageLevel;
