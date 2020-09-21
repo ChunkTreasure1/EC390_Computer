@@ -4,7 +4,7 @@
 #include <ArxContainer.h>
 
 //Declare fonts
-extern uint8_t SmallFont[];
+extern uint8_t BigFont[];
 
 //Create LCD
 UTFT g_GLCD(TFTM040_1_16, 7, 38, 9, 10);
@@ -28,7 +28,7 @@ void setup()
   g_Menu = Menu::Main;
 
   g_GLCD.InitLCD();
-  g_GLCD.setFont(SmallFont);
+  g_GLCD.setFont(BigFont);
   g_GLCD.fillScr(255, 255, 255);
   g_GLCD.setColor(0, 0, 0);
 
@@ -119,24 +119,22 @@ void DrawMain()
   /////Draw engine oil temp/////
   {
     vec2 pos(150.f, g_Height - 50.f);
-      
-    for(int i = 202; i < 338; i++)
+    
+    for (int j = 0; j < 3; j++)
     {
-      g_GLCD.drawPixel(pos.x + 100 * cos(ToRads(i)), pos.y + 100 * sin(ToRads(i)));
-    }
-    for(int i = 202; i < 338; i++)
-    {
-      g_GLCD.drawPixel(pos.x + 99 * cos(ToRads(i)), pos.y + 99 * sin(ToRads(i)));
+      for(int i = 202; i < 338; i++)
+      {
+        g_GLCD.drawPixel(pos.x + (float)(100 - j) * cos(ToRads(i)), pos.y + (float)(100 - j) * sin(ToRads(i)));
+      }
     }
 
-    for(int i = 202; i < 338; i++)
+    for (int j = 0; j < 3; j++)
     {
-      g_GLCD.drawPixel(pos.x + 80 * cos(ToRads(i)), pos.y + 80 * sin(ToRads(i)));
-    } 
-    for(int i = 202; i < 338; i++)
-    {
-      g_GLCD.drawPixel(pos.x + 79 * cos(ToRads(i)), pos.y + 79 * sin(ToRads(i)));
-    } 
+      for(int i = 202; i < 338; i++)
+      {
+        g_GLCD.drawPixel(pos.x + (float)(80 - j) * cos(ToRads(i)), pos.y + (float)(80 - j) * sin(ToRads(i)));
+      }
+    }
 
     float aOne = cos(ToRads(202));
     float aTwo = sin(ToRads(202));
@@ -146,9 +144,10 @@ void DrawMain()
     aTwo = sin(ToRads(338));
     g_GLCD.drawLine(pos.x + 79 * aOne, pos.y + 79 * aTwo, pos.x + 100 * aOne, pos.y + 100 * aTwo);
 
-    g_GLCD.setColor(VGA_GRAY);
     g_GLCD.fillCircle(pos.x, pos.y, 20.f);
-    g_GLCD.setColor(0, 0, 0);
+
+    float val = 250.f;    
+    g_GLCD.drawLine(pos.x, pos.y, pos.x + 90 * cos(ToRads(val)), pos.y + 90 * sin(ToRads(val)));
   }
   //////////////////////////////
 
@@ -156,22 +155,20 @@ void DrawMain()
   {
     vec2 pos(400.f, g_Height - 50.f);    
 
-    for(int i = 202; i < 338; i++)
+    for (int j = 0; j < 3; j++)
     {
-      g_GLCD.drawPixel(pos.x + 100 * cos(ToRads(i)), pos.y + 100 * sin(ToRads(i)));
-    }
-    for(int i = 202; i < 338; i++)
-    {
-      g_GLCD.drawPixel(pos.x + 99 * cos(ToRads(i)), pos.y + 99 * sin(ToRads(i)));
+      for(int i = 202; i < 338; i++)
+      {
+        g_GLCD.drawPixel(pos.x + (float)(100 - j) * cos(ToRads(i)), pos.y + (float)(100 - j) * sin(ToRads(i)));
+      }
     }
 
-    for(int i = 202; i < 338; i++)
+    for (int j = 0; j < 3; j++)
     {
-      g_GLCD.drawPixel(pos.x + 80 * cos(ToRads(i)), pos.y + 80 * sin(ToRads(i)));
-    }
-    for(int i = 202; i < 338; i++)
-    {
-      g_GLCD.drawPixel(pos.x + 79 * cos(ToRads(i)), pos.y + 79 * sin(ToRads(i)));
+      for(int i = 202; i < 338; i++)
+      {
+        g_GLCD.drawPixel(pos.x + (float)(80 - j) * cos(ToRads(i)), pos.y + (float)(80 - j) * sin(ToRads(i)));
+      }
     }
 
     float aOne = cos(ToRads(202));
@@ -182,9 +179,7 @@ void DrawMain()
     aTwo = sin(ToRads(338));
     g_GLCD.drawLine(pos.x + 79 * aOne, pos.y + 79 * aTwo, pos.x + 100 * aOne, pos.y + 100 * aTwo);
 
-    g_GLCD.setColor(VGA_GRAY);
     g_GLCD.fillCircle(pos.x, pos.y, 20.f);
-    g_GLCD.setColor(0, 0, 0);
   }
   /////////////////////////////
 
@@ -192,22 +187,20 @@ void DrawMain()
   {
     vec2 pos(650.f, g_Height - 50.f);    
 
-    for(int i = 202; i < 338; i++)
+    for (int j = 0; j < 3; j++)
     {
-      g_GLCD.drawPixel(pos.x + 100 * cos(ToRads(i)), pos.y + 100 * sin(ToRads(i)));
-    }
-    for(int i = 202; i < 338; i++)
-    {
-      g_GLCD.drawPixel(pos.x + 99 * cos(ToRads(i)), pos.y + 99 * sin(ToRads(i)));
+      for(int i = 202; i < 338; i++)
+      {
+        g_GLCD.drawPixel(pos.x + (float)(100 - j) * cos(ToRads(i)), pos.y + (float)(100 - j) * sin(ToRads(i)));
+      }
     }
 
-    for(int i = 202; i < 338; i++)
+    for (int j = 0; j < 3; j++)
     {
-      g_GLCD.drawPixel(pos.x + 80 * cos(ToRads(i)), pos.y + 80 * sin(ToRads(i)));
-    }
-    for(int i = 202; i < 338; i++)
-    {
-      g_GLCD.drawPixel(pos.x + 79 * cos(ToRads(i)), pos.y + 79 * sin(ToRads(i)));
+      for(int i = 202; i < 338; i++)
+      {
+        g_GLCD.drawPixel(pos.x + (float)(80 - j) * cos(ToRads(i)), pos.y + (float)(80 - j) * sin(ToRads(i)));
+      }
     }
 
     float aOne = cos(ToRads(202));
@@ -218,15 +211,14 @@ void DrawMain()
     aTwo = sin(ToRads(338));
     g_GLCD.drawLine(pos.x + 79 * aOne, pos.y + 79 * aTwo, pos.x + 100 * aOne, pos.y + 100 * aTwo);
 
-    g_GLCD.setColor(VGA_GRAY);
     g_GLCD.fillCircle(pos.x, pos.y, 20.f);
-    g_GLCD.setColor(0, 0, 0);
   }
   /////////////////////////////
 
   /////RPM Counter////
   {
-    g_GLCD.printNumI(1000, CENTER, 100);
+    g_GLCD.setBackColor(255, 255, 255);
+    g_GLCD.print("1000", g_Width - 100.f, 100);
   }
   ////////////////////
 }
