@@ -12,9 +12,12 @@ UTFT g_GLCD(TFTM040_1_16, 7, 38, 9, 10);
 
 arx::vector<Message*> g_Messages;
 Menu g_Menu;
+Menu g_LastMenu;
 
 uint32_t g_Width;
 uint32_t g_Height;
+float g_LastFrameTime;
+float g_TargetUpdateTime = 10.f;
 
 void Message::Print()
 {
@@ -32,6 +35,7 @@ float ToRads(const float& f)
 void setup() 
 {
   g_Menu = Menu::Main;
+  g_LastMenu = Menu::Engine;
 
   g_GLCD.InitLCD();
   g_GLCD.setFont(Grotesk24x48);
@@ -45,6 +49,18 @@ void setup()
   Wire.begin(10);
   Wire.onReceive(recieveEvent);
   Serial.begin(9600);
+
+  pinMode(14, INPUT); //Enter
+  pinMode(15, INPUT); //Back
+  pinMode(16, INPUT); //Engine
+  pinMode(17, INPUT); //Hydraulics
+
+  pinMode(A0, INPUT); //Engine oil temp
+  pinMode(A1, INPUT); //Hydraulic oil temp
+  pinMode(A2, INPUT); //Diesel amount
+  pinMode(A3, INPUT); //Coolant temp
+
+  DrawMain();
 }
 
 void recieveEvent(int howMany)
@@ -79,6 +95,11 @@ void recieveEvent(int howMany)
 
 void loop() 
 {
+  float time = (float)millis();
+  Timestep timestep = time / 1000 - g_LastFrameTime;
+  g_LastFrameTime = time / 1000;
+  g_TargetUpdateTime -= timestep;
+  
   if(g_Messages.size() > 0)
   {
     for(int i = 0; i < g_Messages.size(); i++)
@@ -88,8 +109,8 @@ void loop()
       bool accepted = false;
       do
       {
-        //Check if enter pressed
-        if (true)
+        int enterState = digitalRead(14);
+        if (enterState == HIGH)
         {
           accepted = true;
           delete g_Messages[i];
@@ -99,6 +120,42 @@ void loop()
     }
 
     g_Messages.clear();
+  }
+
+  if(g_TargetUpdateTime <= 0.f)
+  {
+    Update();
+    g_TargetUpdateTime = 10.f;
+  }
+
+  int engineState = digitalRead(16);
+  if(engineState == HIGH)
+  {
+    g_Menu = Menu::Engine;
+  }
+
+  int hydraulicsState = digitalRead(17);
+  if(hydraulicsState == HIGH) 
+  {
+    g_Menu = Menu::Hydraulics;
+  }
+
+  if(g_Menu == Menu::Engine || g_Menu == Menu::Hydraulics)
+  {
+    int backState = digitalRead(15);
+    if(backState == HIGH)
+    {
+      g_Menu = Menu::Main;
+    }  
+  }
+}
+
+void Update()
+{
+  if(g_LastMenu != g_Menu)
+  {
+    g_GLCD.fillScr(255, 255, 255);
+    g_LastMenu = g_Menu;
   }
   
   if (g_Menu == Menu::Main)
@@ -117,8 +174,6 @@ void loop()
   {
     DrawSettings();
   }
-
-  delay(100);
 }
 
 void DrawMain()
@@ -161,17 +216,33 @@ void DrawMain()
     aTwo = sin(ToRads(338));
     g_GLCD.drawLine(pos.x + 79 * aOne, pos.y + 79 * aTwo, pos.x + 100 * aOne, pos.y + 100 * aTwo);
 
-    g_GLCD.fillCircle(pos.x, pos.y, 10.f);
-
     g_GLCD.setFont(BigFont);
     g_GLCD.print("E.O.T", pos.x + 20.f, pos.y);
     g_GLCD.setFont(Grotesk24x48);
 
-    float val = 250.f;
+    int sensorValue = analogRead(A0);
+    float val = (float)sensorValue * (5.f / 1023.f);
+    val = ((val * (338 - 202)) / 5) + 202;
+
+    static float lastVal = val;
+
+    if(lastVal != val)
+    {
+      g_GLCD.setColor(255, 255, 255);
+      for(int i = -5; i < 5; i++)
+      {
+        g_GLCD.drawLine(pos.x + i, pos.y, pos.x + 90 * cos(ToRads(lastVal)), pos.y + 90 * sin(ToRads(lastVal)));
+      }
+      g_GLCD.setColor(0, 0, 0);
+      lastVal = val;
+    }
+    
     for(int i = -5; i < 5; i++)
     {
       g_GLCD.drawLine(pos.x + i, pos.y, pos.x + 90 * cos(ToRads(val)), pos.y + 90 * sin(ToRads(val)));
     }
+
+    g_GLCD.fillCircle(pos.x, pos.y, 10.f);
   }
   //////////////////////////////
 
@@ -213,17 +284,33 @@ void DrawMain()
     aTwo = sin(ToRads(338));
     g_GLCD.drawLine(pos.x + 79 * aOne, pos.y + 79 * aTwo, pos.x + 100 * aOne, pos.y + 100 * aTwo);
 
-    g_GLCD.fillCircle(pos.x, pos.y, 10.f);
-
-    g_GLCD.setFont(BigFont)
+    g_GLCD.setFont(BigFont);
     g_GLCD.print("H.O.T", pos.x + 20.f, pos.y);
     g_GLCD.setFont(Grotesk24x48);
 
-    float val = 250.f;
+    int sensorValue = analogRead(A1);
+    float val = (float)sensorValue * (5.f / 1023.f);
+    val = ((val * (338 - 202)) / 5) + 202;
+
+    static float lastVal = val;
+
+    if(lastVal != val)
+    {
+      g_GLCD.setColor(255, 255, 255);
+      for(int i = -5; i < 5; i++)
+      {
+        g_GLCD.drawLine(pos.x + i, pos.y, pos.x + 90 * cos(ToRads(lastVal)), pos.y + 90 * sin(ToRads(lastVal)));
+      }
+      g_GLCD.setColor(0, 0, 0);
+      lastVal = val;
+    }
+    
     for(int i = -5; i < 5; i++)
     {
       g_GLCD.drawLine(pos.x + i, pos.y, pos.x + 90 * cos(ToRads(val)), pos.y + 90 * sin(ToRads(val)));
     }
+
+    g_GLCD.fillCircle(pos.x, pos.y, 10.f);
   }
   /////////////////////////////
 
@@ -271,24 +358,46 @@ void DrawMain()
     g_GLCD.print("D.A", pos.x + 20.f, pos.y);
     g_GLCD.setFont(Grotesk24x48);
 
-    float val = 250.f;
+    int sensorValue = analogRead(A2);
+    float val = (float)sensorValue * (5.f / 1023.f);
+    val = ((val * (338 - 202)) / 5) + 202;
+
+    static float lastVal = val;
+
+    if(lastVal != val)
+    {
+      g_GLCD.setColor(255, 255, 255);
+      for(int i = -5; i < 5; i++)
+      {
+        g_GLCD.drawLine(pos.x + i, pos.y, pos.x + 90 * cos(ToRads(lastVal)), pos.y + 90 * sin(ToRads(lastVal)));
+      }
+      g_GLCD.setColor(0, 0, 0);
+      lastVal = val;
+    }
+    
     for(int i = -5; i < 5; i++)
     {
       g_GLCD.drawLine(pos.x + i, pos.y, pos.x + 90 * cos(ToRads(val)), pos.y + 90 * sin(ToRads(val)));
     }
+
+    g_GLCD.fillCircle(pos.x, pos.y, 10.f);
   }
   /////////////////////////////
 
   /////RPM Counter////
   {
-    g_GLCD.print("1000", g_Width - 100.f, 100);
+    g_GLCD.print("1000", g_Width - 200.f, 100);
   }
   ////////////////////
 }
 
 void DrawEngine()
 {
-  g_GLCD.print("Diesel amount: 45%", 50.f, 30.f);
+  int dieselSensor = analogRead(A2);
+  float dieselVal = (float)dieselSensor * (5.f / 1023.f);
+  dieselVal = ((dieselVal * 100) / 5);
+  
+  g_GLCD.print("Diesel amount: ", 50.f, 30.f);
   g_GLCD.print("Hours left: 12h", 50.f, 130.f);
   g_GLCD.print("Cooling temperature: 60 C", 50.f, 230.f);
   g_GLCD.print("Hydraulic temperature: 70 C", 50.f, 330.f);
@@ -306,6 +415,13 @@ void DrawHydraulics()
   g_GLCD.print("HLD: On", 50.f, 30.f);
   g_GLCD.print("Floating mode: Off", 50.f, 130.f);
   g_GLCD.print("Turn prioritizing: 2", 50.f, 230.f);
+
+    g_GLCD.setColor(0, 0, 0);
+  g_GLCD.fillRect(0.f, g_Height - 30.f, g_Width, g_Height);
+
+  g_GLCD.setFont(BigFont);
+  g_GLCD.print("Back", 10.f, g_Height - 20.f);
+  g_GLCD.setFont(Grotesk24x48);
 }
 
 void DrawSettings()
