@@ -302,7 +302,11 @@ void DrawEngine()
 }
 
 void DrawHydraulics()
-{}
+{
+  g_GLCD.print("HLD: On", 50.f, 30.f);
+  g_GLCD.print("Floating mode: Off", 50.f, 130.f);
+  g_GLCD.print("Turn prioritizing: 2", 50.f, 230.f);
+}
 
 void DrawSettings()
 {}
