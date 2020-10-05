@@ -95,6 +95,10 @@ void recieveEvent(int howMany)
 
 void loop() 
 {
+  int sensorValue = analogRead(A2);
+  float val = (float)sensorValue * (5.f / 1023.f);
+  Serial.println(val);
+  
   float time = (float)millis();
   Timestep timestep = time / 1000 - g_LastFrameTime;
   g_LastFrameTime = time / 1000;
@@ -359,6 +363,7 @@ void DrawMain()
     g_GLCD.setFont(Grotesk24x48);
 
     int sensorValue = analogRead(A2);
+    Serial.print(sensorValue);
     float val = (float)sensorValue * (5.f / 1023.f);
     val = ((val * (338 - 202)) / 5) + 202;
 
