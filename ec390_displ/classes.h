@@ -14,7 +14,8 @@ enum class Menu
     Main = 0,
     Engine,
     Hydraulics,
-    Settings
+    Settings,
+    None
 };
 
 class Timestep

@@ -76,7 +76,7 @@ void CheckSwitches()
 
 void CheckGuards()
 {
-  int engineOilState = digitalRead(10);
+  short engineOilState = digitalRead(10);
   static bool engineOilCreated = false;
 
   if(engineOilState == HIGH && !engineOilCreated)
@@ -88,7 +88,7 @@ void CheckGuards()
     Serial.println("Sent!");
   }
 
-  int hydraulicOilState = digitalRead(11);
+  short hydraulicOilState = digitalRead(11);
   static bool hydraulicOilCreated = false;
 
   if(hydraulicOilState == HIGH && !hydraulicOilCreated)

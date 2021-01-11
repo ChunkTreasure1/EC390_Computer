@@ -14,10 +14,13 @@ arx::vector<Message*> g_Messages;
 Menu g_Menu;
 Menu g_LastMenu;
 
-uint32_t g_Width;
-uint32_t g_Height;
+uint16_t g_Width;
+uint16_t g_Height;
 float g_LastFrameTime;
 float g_TargetUpdateTime = 10.f;
+
+bool g_EngPressed = false;
+bool g_BackPressed = false;
 
 void Message::Print()
 {
@@ -35,7 +38,7 @@ float ToRads(const float& f)
 void setup() 
 {
   g_Menu = Menu::Main;
-  g_LastMenu = Menu::Engine;
+  g_LastMenu = Menu::None;
 
   g_GLCD.InitLCD();
   g_GLCD.setFont(Grotesk24x48);
@@ -93,17 +96,8 @@ void recieveEvent(int howMany)
   }
 }
 
-void loop() 
+void CheckMessages()
 {
-  int sensorValue = analogRead(A2);
-  float val = (float)sensorValue * (5.f / 1023.f);
-  Serial.println(val);
-  
-  float time = (float)millis();
-  Timestep timestep = time / 1000 - g_LastFrameTime;
-  g_LastFrameTime = time / 1000;
-  g_TargetUpdateTime -= timestep;
-  
   if(g_Messages.size() > 0)
   {
     for(int i = 0; i < g_Messages.size(); i++)
@@ -125,6 +119,18 @@ void loop()
 
     g_Messages.clear();
   }
+}
+
+void loop() 
+{ 
+  short sensorValue = analogRead(A2);
+  float val = (float)sensorValue * (5.f / 1023.f);
+  //Serial.println(val);
+  
+  float time = (float)millis();
+  Timestep timestep = time / 1000 - g_LastFrameTime;
+  g_LastFrameTime = time / 1000;
+  g_TargetUpdateTime -= timestep;
 
   if(g_TargetUpdateTime <= 0.f)
   {
@@ -132,25 +138,50 @@ void loop()
     g_TargetUpdateTime = 10.f;
   }
 
-  int engineState = digitalRead(16);
-  if(engineState == HIGH)
+  short state = digitalRead(16);
+  if(state == HIGH)
   {
     g_Menu = Menu::Engine;
   }
 
-  int hydraulicsState = digitalRead(17);
-  if(hydraulicsState == HIGH) 
+  state = LOW;
+  state = digitalRead(17);
+  if(state == HIGH && !g_EngPressed)
   {
-    g_Menu = Menu::Hydraulics;
+    if(g_Menu != Menu::Engine)
+    {
+      g_LastMenu = g_Menu;
+      g_Menu = Menu::Engine;
+      Update();
+    }
+    Serial.println("Engine Pressed");
+    g_EngPressed = true; 
+  }
+  else if(state == LOW)
+  {
+    g_EngPressed = false;  
   }
 
   if(g_Menu == Menu::Engine || g_Menu == Menu::Hydraulics)
   {
-    int backState = digitalRead(15);
-    if(backState == HIGH)
+    state = LOW;
+    state = digitalRead(15);
+    if(state == HIGH && !g_BackPressed)
     {
-      g_Menu = Menu::Main;
-    }  
+      if(g_Menu != Menu::Main)
+      {
+        g_LastMenu = g_Menu;
+        g_Menu = Menu::Main;      
+        Update();
+      }
+  
+      Serial.println("Back Pressed");
+      g_BackPressed = true;
+    } 
+    else if(state == LOW)
+    {
+      g_BackPressed = false;  
+    }
   }
 }
 
@@ -165,10 +196,12 @@ void Update()
   if (g_Menu == Menu::Main)
   {
     DrawMain();
+    Serial.println("Main");
   }
   else if (g_Menu == Menu::Engine)
   {
     DrawEngine();
+    Serial.println("Engine");
   }
   else if (g_Menu == Menu::Hydraulics)
   {
@@ -363,7 +396,7 @@ void DrawMain()
     g_GLCD.setFont(Grotesk24x48);
 
     int sensorValue = analogRead(A2);
-    Serial.print(sensorValue);
+    Serial.println(sensorValue);
     float val = (float)sensorValue * (5.f / 1023.f);
     val = ((val * (338 - 202)) / 5) + 202;
 
