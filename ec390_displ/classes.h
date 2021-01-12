@@ -15,6 +15,7 @@ enum class Menu
     Engine,
     Hydraulics,
     Settings,
+    Messages,
     None
 };
 
@@ -61,6 +62,22 @@ struct vec2
 
   float x;
   float y;
+
+  vec2& operator+(const vec2& other)
+  {
+    x += other.x;
+    y += other.y;
+
+    return *this;
+  }
+
+  vec2& operator-(const vec2& other)
+  {
+    x -= other.x;
+    y -= other.y;
+
+    return *this;
+  }
 };
 
 #endif //_CLASSES

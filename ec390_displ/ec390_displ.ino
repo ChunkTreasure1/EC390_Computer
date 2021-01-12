@@ -1,4 +1,5 @@
 #include "classes.h"
+#include "defines.h"
 #include <Wire.h>
 #include <UTFT.h>
 #include <ArxContainer.h>
@@ -11,6 +12,8 @@ extern uint8_t Grotesk24x48[];
 UTFT g_GLCD(TFTM040_1_16, 7, 38, 9, 10);
 
 arx::vector<Message*> g_Messages;
+arx::vector<Message*> g_PreviousMessages;
+
 Menu g_Menu;
 Menu g_LastMenu;
 
@@ -21,10 +24,35 @@ float g_TargetUpdateTime = 10.f;
 
 bool g_EngPressed = false;
 bool g_BackPressed = false;
+bool g_HydPressed = false;
 
 void Message::Print()
 {
-  g_GLCD.print(m_Message, CENTER, 100);  
+  g_GLCD.fillScr(255, 255, 255);
+
+  if(m_MessageLevel == MessageLevel::Info)
+  {
+    g_GLCD.setColor(110, 110, 110);
+    g_GLCD.print("[Info]", CENTER, 150);
+  }
+  else if(m_MessageLevel == MessageLevel::Warning)
+  {
+    g_GLCD.setColor(255, 154, 0);
+    g_GLCD.print("[Warning]", CENTER, 150);
+  }
+  else if(m_MessageLevel == MessageLevel::Error)
+  {
+    g_GLCD.setColor(255, 90, 90);
+    g_GLCD.print("[Error]", CENTER, 150);
+  }
+  else if(m_MessageLevel == MessageLevel::Critical)
+  {
+    g_GLCD.setColor(255, 0, 0);
+    g_GLCD.print("[Critical]", CENTER, 150);
+  }
+
+  g_GLCD.setColor(0, 0, 0);
+  g_GLCD.print(m_Message, CENTER, 200);
 }
 
 float ToRads(const float& f)
@@ -53,16 +81,18 @@ void setup()
   Wire.onReceive(recieveEvent);
   Serial.begin(9600);
 
-  pinMode(14, INPUT); //Enter
-  pinMode(15, INPUT); //Back
-  pinMode(16, INPUT); //Engine
-  pinMode(17, INPUT); //Hydraulics
+  pinMode(ENTER, INPUT); //Enter
+  pinMode(BACK, INPUT); //Back
+  pinMode(ENGINE, INPUT); //Engine
+  pinMode(HYDRAULICS, INPUT); //Hydraulics
 
-  pinMode(A0, INPUT); //Engine oil temp
-  pinMode(A1, INPUT); //Hydraulic oil temp
-  pinMode(A2, INPUT); //Diesel amount
-  pinMode(A3, INPUT); //Coolant temp
+  pinMode(ENGINE_OIL_TEMP, INPUT); //Engine oil temp
+  pinMode(HYDRAULIC_OIL_TEMP, INPUT); //Hydraulic oil temp
+  pinMode(DIESEL_AMOUNT, INPUT); //Diesel amount
+  pinMode(COOLANT_TEMP, INPUT); //Coolant temp
+  pinMode(ENGINE_RMP, INPUT); //Engine RPM
 
+  g_Messages.push_back(new Message(MessageLevel::Warning, "Test"));
   DrawMain();
 }
 
@@ -100,32 +130,28 @@ void CheckMessages()
 {
   if(g_Messages.size() > 0)
   {
-    for(int i = 0; i < g_Messages.size(); i++)
+    if (g_Menu != Menu::Messages)
     {
-      g_Messages[i]->Print();
-      
-      bool accepted = false;
-      do
-      {
-        int enterState = digitalRead(14);
-        if (enterState == HIGH)
-        {
-          accepted = true;
-          delete g_Messages[i];
-        } 
-      } 
-      while(!accepted);
+      g_Menu = Menu::Messages;    
     }
-
-    g_Messages.clear();
   }
+}
+
+void CheckPreviousMessages()
+{
+  if(g_PreviousMessages.size() > 10)
+  {
+    delete g_PreviousMessages[10];
+    g_PreviousMessages[10] = nullptr;
+    g_PreviousMessages.erase(g_PreviousMessages.begin() + 10);  
+  }  
 }
 
 void loop() 
 { 
-  short sensorValue = analogRead(A2);
-  float val = (float)sensorValue * (5.f / 1023.f);
-  //Serial.println(val);
+  short sensorValue = analogRead(DIESEL_AMOUNT);
+  float voltage = (float)sensorValue * (5.f / 1023.f);
+  Serial.println(voltage);
   
   float time = (float)millis();
   Timestep timestep = time / 1000 - g_LastFrameTime;
@@ -138,19 +164,39 @@ void loop()
     g_TargetUpdateTime = 10.f;
   }
 
-  short state = digitalRead(16);
+  CheckMessages();
+  HandleInput();
+}
+
+void HandleInput()
+{
+  short state = digitalRead(HYDRAULICS);
   if(state == HIGH)
   {
-    g_Menu = Menu::Engine;
+    Serial.println("Hydraulic Pressed");  
+  }
+  
+  if(state == HIGH && !g_HydPressed)
+  {
+    if(g_Menu != Menu::Hydraulics)
+    {
+      g_Menu = Menu::Hydraulics;
+      Update();
+    }
+    g_HydPressed = true;
+    Serial.println("Hydraulic Pressed");
+  }
+  else if(state == LOW)
+  {
+    g_HydPressed = false;  
   }
 
   state = LOW;
-  state = digitalRead(17);
+  state = digitalRead(ENGINE);
   if(state == HIGH && !g_EngPressed)
   {
     if(g_Menu != Menu::Engine)
     {
-      g_LastMenu = g_Menu;
       g_Menu = Menu::Engine;
       Update();
     }
@@ -161,27 +207,23 @@ void loop()
   {
     g_EngPressed = false;  
   }
-
-  if(g_Menu == Menu::Engine || g_Menu == Menu::Hydraulics)
-  {
-    state = LOW;
-    state = digitalRead(15);
-    if(state == HIGH && !g_BackPressed)
-    {
-      if(g_Menu != Menu::Main)
-      {
-        g_LastMenu = g_Menu;
-        g_Menu = Menu::Main;      
-        Update();
-      }
   
-      Serial.println("Back Pressed");
-      g_BackPressed = true;
-    } 
-    else if(state == LOW)
+  state = LOW;
+  state = digitalRead(BACK);
+  if(state == HIGH && !g_BackPressed)
+  {
+    if(g_Menu != Menu::Main)
     {
-      g_BackPressed = false;  
+      g_Menu = Menu::Main;      
+      Update();
     }
+  
+    Serial.println("Back Pressed");
+    g_BackPressed = true;
+  }
+  else if(state == LOW)
+  {
+    g_BackPressed = false;  
   }
 }
 
@@ -196,12 +238,12 @@ void Update()
   if (g_Menu == Menu::Main)
   {
     DrawMain();
-    Serial.println("Main");
+    //Serial.println("Main");
   }
   else if (g_Menu == Menu::Engine)
   {
     DrawEngine();
-    Serial.println("Engine");
+    //Serial.println("Engine");
   }
   else if (g_Menu == Menu::Hydraulics)
   {
@@ -210,6 +252,10 @@ void Update()
   else if (g_Menu == Menu::Settings)
   {
     DrawSettings();
+  }
+  else if(g_Menu == Menu::Messages)
+  {
+    DrawMessages();
   }
 }
 
@@ -257,7 +303,7 @@ void DrawMain()
     g_GLCD.print("E.O.T", pos.x + 20.f, pos.y);
     g_GLCD.setFont(Grotesk24x48);
 
-    int sensorValue = analogRead(A0);
+    int sensorValue = analogRead(ENGINE_OIL_TEMP);
     float val = (float)sensorValue * (5.f / 1023.f);
     val = ((val * (338 - 202)) / 5) + 202;
 
@@ -325,7 +371,7 @@ void DrawMain()
     g_GLCD.print("H.O.T", pos.x + 20.f, pos.y);
     g_GLCD.setFont(Grotesk24x48);
 
-    int sensorValue = analogRead(A1);
+    int sensorValue = analogRead(HYDRAULIC_OIL_TEMP);
     float val = (float)sensorValue * (5.f / 1023.f);
     val = ((val * (338 - 202)) / 5) + 202;
 
@@ -395,7 +441,7 @@ void DrawMain()
     g_GLCD.print("D.A", pos.x + 20.f, pos.y);
     g_GLCD.setFont(Grotesk24x48);
 
-    int sensorValue = analogRead(A2);
+    int sensorValue = analogRead(DIESEL_AMOUNT);
     Serial.println(sensorValue);
     float val = (float)sensorValue * (5.f / 1023.f);
     val = ((val * (338 - 202)) / 5) + 202;
@@ -460,6 +506,30 @@ void DrawHydraulics()
   g_GLCD.setFont(BigFont);
   g_GLCD.print("Back", 10.f, g_Height - 20.f);
   g_GLCD.setFont(Grotesk24x48);
+}
+
+void DrawMessages()
+{
+  Serial.println("Drawing messages!");
+  for(int i = 0; i < g_Messages.size(); i++)
+  {
+    bool enterPressed = false;
+
+    g_Messages[i]->Print();
+    while(!enterPressed)
+    {
+      short enterState = digitalRead(15);
+      if (enterState == HIGH && !enterPressed)
+      {
+        enterPressed = true;
+      } 
+    }
+    g_PreviousMessages.push_back(g_Messages[i]);
+    g_Messages.erase(g_Messages.begin() + i);
+    enterPressed = false;
+  }
+
+  g_Menu == Menu::Main;
 }
 
 void DrawSettings()
