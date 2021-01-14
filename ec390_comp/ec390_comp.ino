@@ -6,7 +6,7 @@ enum class EngineState
 {
   Idle,
   Work
-}
+};
 
 EngineState g_CurrentEngineState = EngineState::Idle;
 bool g_IsAutoRPM = false;
@@ -26,13 +26,13 @@ void setup()
 
 void SetupPins()
 {
-  pinMode(P_TURN_EFFECT, INPUT)
+  pinMode(P_TURN_EFFECT, INPUT);
   pinMode(M_TURN_BREAK, OUTPUT);
   pinMode(M_HLD, OUTPUT);
   pinMode(R_START_HEATER, OUTPUT);
   
   pinMode(P_EXTRA, OUTPUT);
-  pinMode(P_SSC, OUTPUT)
+  pinMode(P_SSC, OUTPUT);
   pinMode(M_FLOAT_MODE, OUTPUT);
   pinMode(R_FUEL_VALVE, OUTPUT);
 
@@ -114,7 +114,7 @@ void loop()
 
 void CheckSwitches()
 {
-  short switchState = digitalRead(S_AUTO_TURN_BRAKE)
+  short switchState = digitalRead(S_AUTO_TURN_BRAKE);
   if (switchState == HIGH)
   {
     /* code */

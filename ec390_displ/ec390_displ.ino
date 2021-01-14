@@ -477,7 +477,7 @@ void DrawMain()
 
 void DrawEngine()
 {
-  int dieselSensor = analogRead(A2);
+  int dieselSensor = analogRead(DIESEL_AMOUNT);
   float dieselVal = (float)dieselSensor * (5.f / 1023.f);
   dieselVal = ((dieselVal * 100) / 5);
   
@@ -518,7 +518,7 @@ void DrawMessages()
     g_Messages[i]->Print();
     while(!enterPressed)
     {
-      short enterState = digitalRead(15);
+      short enterState = digitalRead(ENTER);
       if (enterState == HIGH && !enterPressed)
       {
         enterPressed = true;
