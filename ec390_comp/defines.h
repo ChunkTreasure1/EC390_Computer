@@ -56,7 +56,6 @@
 #define S_WIPER_LOWER 38
 #define TEMP_COOLANT A1
 #define TEMP_HYDRAULIC_OIL A2
-#define NG_FUEL A3
 #define TG_ENGINE_OIL A4
 #define L_CENTRAL 39
 #define L_WARNING 40

@@ -148,11 +148,7 @@ void CheckPreviousMessages()
 }
 
 void loop() 
-{ 
-  short sensorValue = analogRead(DIESEL_AMOUNT);
-  float voltage = (float)sensorValue * (5.f / 1023.f);
-  Serial.println(voltage);
-  
+{
   float time = (float)millis();
   Timestep timestep = time / 1000 - g_LastFrameTime;
   g_LastFrameTime = time / 1000;

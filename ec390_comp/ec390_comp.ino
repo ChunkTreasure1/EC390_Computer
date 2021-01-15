@@ -12,7 +12,8 @@ EngineState g_CurrentEngineState = EngineState::Idle;
 bool g_IsAutoRPM = false;
 
 uint16_t g_WorkRPM = 1500;
-uint16_t g_IdleRPM = 800;
+uint16_t g_IdleRPM = 600;
+uint16_t g_CurrentRPM = 0;
 float g_LastFrameTime = 0.f;
 float g_TargetTimeToIdle = 10.f;
 
@@ -38,8 +39,8 @@ void SetupPins()
 
   pinMode(R_WIPER_UPPER, OUTPUT);
   pinMode(R_WIPER_LOWER, OUTPUT);
-  pinMode(N_ENGINE_OIL, OUTPUT);
-  pinMode(N_HYDRAULIC_OIL, OUTPUT);
+  pinMode(N_ENGINE_OIL, INPUT_PULLUP);
+  pinMode(N_HYDRAULIC_OIL, INPUT_PULLUP);
 
   pinMode(LEVER_SENSE, INPUT);
   pinMode(PEDAL_SENSE, INPUT);
@@ -47,7 +48,7 @@ void SetupPins()
 
   pinMode(R_ENGINE_HEATER, OUTPUT);
   pinMode(R_FAN, OUTPUT);
-  pinMode(N_WATERSEPERATOR, OUTPUT);
+  pinMode(N_WATERSEPERATOR, INPUT_PULLUP);
 
   pinMode(RPM_ENGINE, INPUT);
   pinMode(RPM_TURN, INPUT);
@@ -228,32 +229,123 @@ void CheckSwitches()
 
 void CheckGuards()
 {
-  short engineOilState = digitalRead(10);
-  static bool engineOilCreated = false;
-
-  if(engineOilState == HIGH && !engineOilCreated)
+  /////Engine Oil/////
+  short state = digitalRead(N_ENGINE_OIL);
+  static bool engineOilLevel = false;
+  if (state == LOW && !engineOilLevel)
   {
-    engineOilCreated = true;
+    engineOilLevel = true;
     Wire.beginTransmission(10);
     Wire.write("{3Låg motorolja!}");
     Wire.endTransmission();
-    Serial.println("Sent!");
+
+    //Turn off the engine
+    digitalWrite(R_FUEL_VALVE, 1);
   }
+  ////////////////////
 
-  short hydraulicOilState = digitalRead(11);
-  static bool hydraulicOilCreated = false;
-
-  if(hydraulicOilState == HIGH && !hydraulicOilCreated)
+  /////Hydraulic Oil//////
+  state = HIGH;
+  state = digitalRead(N_HYDRAULIC_OIL);
+  static bool hydraulicOilLevel = false;
+  if (state == LOW && !hydraulicOilLevel)
   {
-    hydraulicOilCreated = true;
+      hydraulicOilLevel = true;
+      Wire.beginTransmission(10);
+      Wire.write("{3Låg hydraulolja!}");
+      Wire.endTransmission();
+  }
+  ////////////////////////
+
+  /////Coolant level/////
+  state = LOW;
+  state = digitalRead(N_COOLANT);
+  static bool coolantLevel = false;
+  if (state == HIGH && !coolantLevel)
+  {
+    coolantLevel = true;
     Wire.beginTransmission(10);
-    Wire.write("{3Låg hydraulolja!}");
+    Wire.write("{3Låg kylvätska!}");
     Wire.endTransmission();
   }
+  ///////////////////////
+
+  /////Water seperator/////
+  state = HIGH;
+  state = digitalRead(N_WATERSEPERATOR);
+  static bool waterSeperator = false;
+  if (state == LOW && !waterSeperator)
+  {
+    waterSeperator = true;
+    Wire.beginTransmission(10);
+    Wire.write("{2Vatten seperator full!}");
+    Wire.endTransmission();
+  }
+  /////////////////////////
+
+  /////Overload warning/////
+  state = LOW;
+  state = digitalRead(S_OVERLOAD_ALARM);
+  if (state == HIGH)
+  {
+    state = LOW;
+    state = digitalRead(TV_OVERLOAD);
+    static bool overloadWarning = false;
+    if (state == HIGH && !overloadWarning)
+    {
+      overloadWarning = true;
+      Wire.beginTransmission(10);
+      Wire.write("{3Varning! Överlast!}");
+      Wire.endTransmission();
+
+      digitalWrite(L_OVERLOAD, 1);
+    }
+    else
+    {
+      digitalWrite(L_OVERLOAD, 0);
+    }  
+  }
+  //////////////////////////
+
+  /////Air filter/////
+  state = LOW;
+  state = digitalRead(TV_AIR_FILTER);
+  static bool airFilter = false;
+  if (state == HIGH && !airFilter)
+  {
+    airFilter = true;
+    Wire.beginTransmission(10);
+    Wire.write("{2Luftfilter igensatt!}");
+    Wire.endTransmission();
+  }
+  
+  //////////////////////////////
 }
 
 void CheckSensors()
 {
+  /////Engine oil sensor/////
+  float sensorValue = analogRead(TG_ENGINE_OIL);
+  float voltage = (float)sensorValue * (5.f / 1023.f);
+
+  float val = (voltage * 0.7f) / 5.f;
+  static bool engineOilSensor = false;
+  if ((g_CurrentRPM > 400 && g_CurrentRPM < 1000) && val < 0.07f)
+  {
+    engineOilSensor = true;
+    Wire.beginTransmission(10);
+    Wire.write("{3Lågt oljetryck!}");
+    Wire.endTransmission();
+
+    //Turn off the engine
+    digitalWrite(R_FUEL_VALVE, 1);
+  }
+  ///////////////////////////
+
+  /////Engine RPM/////
+
+  ////////////////////
+
   if (g_IsAutoRPM)
   {
     short sensorState = digitalRead(LEVER_SENSE);
