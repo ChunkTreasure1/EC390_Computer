@@ -1,4 +1,4 @@
-#include "classes.h"
+  #include "classes.h"
 #include "defines.h"
 #include <Wire.h>
 #include <UTFT.h>
@@ -81,10 +81,10 @@ void setup()
   Wire.onReceive(recieveEvent);
   Serial.begin(9600);
 
-  pinMode(ENTER, INPUT); //Enter
-  pinMode(BACK, INPUT); //Back
-  pinMode(ENGINE, INPUT); //Engine
-  pinMode(HYDRAULICS, INPUT); //Hydraulics
+  pinMode(ENTER, INPUT_PULLUP); //Enter
+  pinMode(BACK, INPUT_PULLUP); //Back
+  pinMode(ENGINE, INPUT_PULLUP); //Engine
+  pinMode(HYDRAULICS, INPUT_PULLUP); //Hydraulics
 
   pinMode(ENGINE_OIL_TEMP, INPUT); //Engine oil temp
   pinMode(HYDRAULIC_OIL_TEMP, INPUT); //Hydraulic oil temp
@@ -92,7 +92,6 @@ void setup()
   pinMode(COOLANT_TEMP, INPUT); //Coolant temp
   pinMode(ENGINE_RMP, INPUT); //Engine RPM
 
-  g_Messages.push_back(new Message(MessageLevel::Warning, "Test"));
   DrawMain();
 }
 
@@ -167,12 +166,12 @@ void loop()
 void HandleInput()
 {
   short state = digitalRead(HYDRAULICS);
-  if(state == HIGH)
+  if(state == LOW)
   {
     Serial.println("Hydraulic Pressed");  
   }
   
-  if(state == HIGH && !g_HydPressed)
+  if(state == LOW && !g_HydPressed)
   {
     if(g_Menu != Menu::Hydraulics)
     {
@@ -182,14 +181,14 @@ void HandleInput()
     g_HydPressed = true;
     Serial.println("Hydraulic Pressed");
   }
-  else if(state == LOW)
+  else if(state == HIGH)
   {
     g_HydPressed = false;  
   }
 
-  state = LOW;
+  state = HIGH;
   state = digitalRead(ENGINE);
-  if(state == HIGH && !g_EngPressed)
+  if(state == LOW && !g_EngPressed)
   {
     if(g_Menu != Menu::Engine)
     {
@@ -199,14 +198,14 @@ void HandleInput()
     Serial.println("Engine Pressed");
     g_EngPressed = true; 
   }
-  else if(state == LOW)
+  else if(state == HIGH)
   {
     g_EngPressed = false;  
   }
   
-  state = LOW;
+  state = HIGH;
   state = digitalRead(BACK);
-  if(state == HIGH && !g_BackPressed)
+  if(state == LOW && !g_BackPressed)
   {
     if(g_Menu != Menu::Main)
     {
@@ -217,7 +216,7 @@ void HandleInput()
     Serial.println("Back Pressed");
     g_BackPressed = true;
   }
-  else if(state == LOW)
+  else if(state == HIGH)
   {
     g_BackPressed = false;  
   }
